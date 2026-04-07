@@ -9,9 +9,16 @@ description = "A mini RL environment for safe loose-file cleanup."
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{ name = "Codex" }]
+dependencies = [
+  "openenv-core[core]>=0.2.2",
+  "fastapi>=0.116.0",
+  "pydantic>=2.10.0",
+  "uvicorn>=0.35.0",
+]
 
 [project.scripts]
 safe-cleanup = "safe_cleanup_env.cli:main"
+server = "server.app:main"
 
 [project.optional-dependencies]
 openenv = [
@@ -21,5 +28,6 @@ openenv = [
   "uvicorn>=0.35.0",
 ]
 
-[tool.setuptools.packages.find]
-include = ["safe_cleanup_env*"]
+[tool.setuptools]
+include-package-data = true
+packages = ["safe_cleanup_env", "safe_cleanup_env.server", "server"]

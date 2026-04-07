@@ -196,9 +196,22 @@ Server helper endpoints:
 The repository includes:
 
 - `openenv.yaml`
+- root `models.py`, `client.py`, and `server/` files matching the OpenEnv template
 - an environment adapter under `safe_cleanup_env/server/environment.py`
 - a server app under `safe_cleanup_env/server/app.py`
 - a root `Dockerfile` for Hugging Face Spaces
 - a package Dockerfile under `safe_cleanup_env/server/Dockerfile`
 
 Optional server/runtime dependencies are listed in `requirements-openenv.txt`.
+
+Validation:
+
+```bash
+openenv validate
+```
+
+The project is structured for the official deployment flow:
+
+```bash
+openenv push --repo-id ashwanishukla24/files-clean-up
+```

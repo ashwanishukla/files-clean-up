@@ -1,9 +1,6 @@
-name: safe-cleanup-agent-env
-version: 0.1.0
-entrypoint: safe_cleanup_env.server.environment:OpenEnvSafeCleanupEnvironment
-description: >
-  Safety-critical file organization environment for cleaning loose personal files
-  without touching protected project, client, or work files.
-task_family: file-organization
-observation_format: json
-action_format: json
+spec_version: 1
+name: files_clean_up
+type: space
+runtime: fastapi
+app: server.app:app
+port: 8000
