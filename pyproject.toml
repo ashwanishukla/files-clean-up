@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "safe-cleanup-agent-env"
+version = "0.1.0"
+description = "A mini RL environment for safe loose-file cleanup."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Codex" }]
+
+[project.scripts]
+safe-cleanup = "safe_cleanup_env.cli:main"
+
+[project.optional-dependencies]
+openenv = [
+  "fastapi>=0.116.0",
+  "openenv-core[core]>=0.2.1",
+  "pydantic>=2.10.0",
+  "uvicorn>=0.35.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["safe_cleanup_env*"]
