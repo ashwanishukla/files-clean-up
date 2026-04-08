@@ -6,7 +6,6 @@ except Exception as exc:  # pragma: no cover
     raise ImportError("openenv-core[core] is required to serve this environment") from exc
 
 from models import FilesCleanUpAction, FilesCleanUpObservation
-from safe_cleanup_env.baseline import run_heuristic_baseline
 from safe_cleanup_env.grader import grade_snapshot
 from safe_cleanup_env.models import CleanupStateSnapshot
 from safe_cleanup_env.sample_data import TASKS, TASK_LOOKUP
@@ -40,7 +39,9 @@ def tasks_endpoint():
 
 @app.get("/baseline")
 def baseline_endpoint():
-    return run_heuristic_baseline()
+    from inference import run_inference_sync
+
+    return run_inference_sync()
 
 
 @app.post("/grader")

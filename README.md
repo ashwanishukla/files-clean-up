@@ -166,9 +166,27 @@ Run tests:
 python3 -m unittest discover -s tests -v
 ```
 
+Run the submission baseline:
+
+```bash
+export HF_TOKEN=your_token_here
+python inference.py
+```
+
+Optional overrides:
+
+```bash
+export API_BASE_URL=https://router.huggingface.co/v1
+export MODEL_NAME=openai/gpt-oss-120b:novita
+export LOCAL_IMAGE_NAME=files-clean-up:latest
+```
+
 ## Baseline scores
 
-The included baseline is a deterministic safety-first heuristic policy.
+The repository includes two baseline paths:
+
+- `safe_cleanup_env/baseline.py`: deterministic heuristic used for local tests
+- `inference.py`: submission baseline that uses the OpenAI client against a hosted model and logs `START` / `STEP` / `END`
 
 - `desktop_cleanup_easy`: 0.8000
 - `downloads_sort_medium`: 1.0000
