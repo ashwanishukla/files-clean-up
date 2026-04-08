@@ -16,9 +16,14 @@ class FilesCleanUpEnvironment(Environment):
         self._core = SafeCleanupEnvironment()
         self._state = State(episode_id=str(uuid4()), step_count=0)
 
-    def reset(self) -> FilesCleanUpObservation:
+    def reset(
+        self,
+        seed: int | None = None,
+        episode_id: str | None = None,
+        **kwargs,
+    ) -> FilesCleanUpObservation:
         self._state = State(episode_id=str(uuid4()), step_count=0)
-        payload = self._core.reset("desktop_cleanup_easy")
+        payload = self._core.reset(kwargs.get("task_id") or "desktop_cleanup_easy")
         return self._observation(payload)
 
     def step(self, action: FilesCleanUpAction) -> FilesCleanUpObservation:  # type: ignore[override]
@@ -42,9 +47,13 @@ class FilesCleanUpEnvironment(Environment):
         done: bool | None = None,
         metadata: dict | None = None,
     ) -> FilesCleanUpObservation:
+        clean_payload = dict(payload)
+        payload_done = clean_payload.pop("done", False)
+        payload_reward = clean_payload.pop("reward", None)
+        payload_metadata = clean_payload.pop("metadata", {})
         return FilesCleanUpObservation(
-            **payload,
-            done=payload.get("done", False) if done is None else done,
-            reward=reward,
-            metadata=metadata or {},
+            **clean_payload,
+            done=payload_done if done is None else done,
+            reward=payload_reward if reward is None else reward,
+            metadata=payload_metadata if metadata is None else metadata,
         )
