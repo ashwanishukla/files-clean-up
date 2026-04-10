@@ -186,7 +186,7 @@ export LOCAL_IMAGE_NAME=files-clean-up:latest
 The repository includes two baseline paths:
 
 - `safe_cleanup_env/baseline.py`: deterministic heuristic used for local tests
-- `inference.py`: submission baseline that uses the OpenAI client against a hosted model and logs `START` / `STEP` / `END`
+- `inference.py`: submission baseline that uses the OpenAI client against a hosted model and logs `[START]` / `[STEP]` / `[END]`
 
 - `desktop_cleanup_easy`: 0.8000
 - `downloads_sort_medium`: 1.0000

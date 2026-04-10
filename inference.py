@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import os
 import re
 from typing import Any
@@ -40,8 +39,17 @@ Rules:
 """.strip()
 
 
-def emit_log(tag: str, payload: dict[str, Any]) -> None:
-    print(f"{tag} {json.dumps(payload, sort_keys=True, ensure_ascii=True)}", flush=True)
+def _format_log_value(value: Any) -> str:
+    if value is None:
+        return "none"
+    text = str(value)
+    return re.sub(r"\s+", "_", text)
+
+
+def emit_log(tag: str, **fields: Any) -> None:
+    parts = [f"{key}={_format_log_value(value)}" for key, value in fields.items()]
+    suffix = " " + " ".join(parts) if parts else ""
+    print(f"[{tag}]{suffix}", flush=True)
 
 
 def extract_json_object(text: str) -> dict[str, Any]:
@@ -55,23 +63,18 @@ def extract_json_object(text: str) -> dict[str, Any]:
 
 
 def build_file_prompt(task_id: str, file_record: Any, allowed_destinations: list[str], protected_roots: list[str]) -> str:
-    return json.dumps(
-        {
-            "task_id": task_id,
-            "file": {
-                "file_id": file_record["file_id"],
-                "name": file_record["name"],
-                "current_path": file_record["current_path"],
-                "extension": file_record["extension"],
-                "size_mb": file_record["size_mb"],
-                "content_hint": file_record["content_hint"],
-                "risk_flags": file_record["risk_flags"],
-            },
-            "allowed_destinations": allowed_destinations,
-            "protected_roots": protected_roots,
-            "instruction": "Return a move/skip decision for this file.",
-        },
-        sort_keys=True,
+    return (
+        f"task_id={task_id}\n"
+        f"file_id={file_record['file_id']}\n"
+        f"name={file_record['name']}\n"
+        f"current_path={file_record['current_path']}\n"
+        f"extension={file_record['extension']}\n"
+        f"size_mb={file_record['size_mb']}\n"
+        f"content_hint={file_record['content_hint']}\n"
+        f"risk_flags={','.join(file_record['risk_flags'])}\n"
+        f"allowed_destinations={','.join(allowed_destinations)}\n"
+        f"protected_roots={','.join(protected_roots)}\n"
+        "instruction=Return a move/skip decision for this file."
     )
 
 
@@ -191,19 +194,27 @@ async def run_inference() -> dict[str, float]:
 
     emit_log(
         "START",
-        {
-            "api_base_url": API_BASE_URL,
-            "environment": SPACE_REPO_ID,
-            "local_image_name": LOCAL_IMAGE_NAME,
-            "model_name": MODEL_NAME,
-            "task_count": len(TASKS),
-        },
+        mode="run",
+        api_base_url=API_BASE_URL,
+        environment=SPACE_REPO_ID,
+        local_image_name=LOCAL_IMAGE_NAME,
+        model_name=MODEL_NAME,
+        task_count=len(TASKS),
     )
 
     try:
         for task in TASKS:
+            task_step_start = total_steps
             reset_result = await env.reset(task_id=task.task_id)
             observation = reset_result.observation
+            emit_log(
+                "START",
+                mode="task",
+                task=task.task_id,
+                difficulty=task.difficulty,
+                allowed_destinations=len(task.allowed_destinations),
+                candidate_files=len(observation.candidate_files),
+            )
 
             for file_record in observation.candidate_files:
                 model_decision = decide_file(llm_client, task.task_id, observation, file_record)
@@ -219,17 +230,13 @@ async def run_inference() -> dict[str, float]:
                     total_steps += 1
                     emit_log(
                         "STEP",
-                        {
-                            "action_type": action.action_type,
-                            "destination": action.destination,
-                            "done": result.done,
-                            "feedback": observation.feedback,
-                            "file_id": action.file_id,
-                            "reason": action.reason,
-                            "reward": result.reward,
-                            "step_count": total_steps,
-                            "task_id": task.task_id,
-                        },
+                        task=task.task_id,
+                        step=total_steps,
+                        action=action.action_type,
+                        file_id=action.file_id,
+                        destination=action.destination,
+                        reward=result.reward,
+                        done=result.done,
                     )
 
             submit_result = await env.step(FilesCleanUpAction(action_type="submit"))
@@ -240,26 +247,27 @@ async def run_inference() -> dict[str, float]:
             )
             emit_log(
                 "STEP",
-                {
-                    "action_type": "submit",
-                    "done": submit_result.done,
-                    "feedback": submit_result.observation.feedback,
-                    "reward": submit_result.reward,
-                    "step_count": total_steps,
-                    "task_id": task.task_id,
-                },
+                task=task.task_id,
+                step=total_steps,
+                action="submit",
+                reward=submit_result.reward,
+                done=submit_result.done,
+            )
+            emit_log(
+                "END",
+                task=task.task_id,
+                score=scores[task.task_id],
+                steps=total_steps - task_step_start,
             )
     finally:
         await env.close()
 
     emit_log(
         "END",
-        {
-            "model_name": MODEL_NAME,
-            "scores": scores,
-            "tasks": [task.task_id for task in TASKS],
-            "total_steps": total_steps,
-        },
+        mode="run",
+        model_name=MODEL_NAME,
+        total_tasks=len(TASKS),
+        total_steps=total_steps,
     )
     return scores
 
