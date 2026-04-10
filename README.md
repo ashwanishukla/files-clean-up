@@ -189,7 +189,7 @@ The repository includes two baseline paths:
 - `inference.py`: submission baseline that uses the OpenAI client against a hosted model and logs `[START]` / `[STEP]` / `[END]`
 
 - `desktop_cleanup_easy`: 0.8000
-- `downloads_sort_medium`: 1.0000
+- `downloads_sort_medium`: 0.9999
 - `safety_first_hard`: 0.9000
 
 These are reproducible because the baseline does not use randomness.

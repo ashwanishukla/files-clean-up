@@ -2,6 +2,13 @@ from __future__ import annotations
 
 from .models import CleanupStateSnapshot, CleanupTask, ScoreBreakdown
 
+MIN_SCORE = 0.0001
+MAX_SCORE = 0.9999
+
+
+def _strict_unit_interval(score: float) -> float:
+    return round(min(MAX_SCORE, max(MIN_SCORE, score)), 4)
+
 
 def grade_snapshot(task: CleanupTask, snapshot: CleanupStateSnapshot) -> ScoreBreakdown:
     result = ScoreBreakdown()
@@ -44,7 +51,7 @@ def grade_snapshot(task: CleanupTask, snapshot: CleanupStateSnapshot) -> ScoreBr
     total = 0.65 * result.decision_accuracy + 0.2 * result.safety_score + 0.15 * result.completion
     if severe_violations:
         total = min(total, 0.45)
-    result.total = round(total, 4)
+    result.total = _strict_unit_interval(total)
 
     if severe_violations:
         result.notes.append("Safety violations cap the final score.")
